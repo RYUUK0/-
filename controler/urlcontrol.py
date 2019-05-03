@@ -9,6 +9,7 @@ class URLcontrol(object):
     def __init__(self):
         self.new_urls = self.get_file_comment(st.NEW_URL_PATH)
         self.old_urls = self.get_file_comment(st.OLD_URL_PATH)
+        self.diode = False
         self.this_url_counts = 0
 
     #读取和保存URL文件
@@ -63,11 +64,12 @@ class URLcontrol(object):
                     self.add_url(url)
 
     def get_new_url(self):
-        new_url = self.new_urls.pop()
-        md5 = hashlib.md5()
-        md5.update(new_url.encode())
-        self.old_urls.add(md5.hexdigest())
-        return new_url
+        if not self.diode:
+            new_url = self.new_urls.pop()
+            md5 = hashlib.md5()
+            md5.update(new_url.encode())
+            self.old_urls.add(md5.hexdigest())
+            return new_url
 
     @property
     def new_urls_size(self):

@@ -18,3 +18,8 @@ Download_Data_Path = MAIN_PATH + '\\Download_Data\\'
 #爬取URL个数
 NEED_URL_COUNTS = 200
 
+#超时时间限制
+GET_WAIT_LIMIT = 300
+URL_WAIT_LIMIT = 480
+SAVE_WAIT_LIMIT = 480
+

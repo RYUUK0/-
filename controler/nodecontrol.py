@@ -18,6 +18,10 @@ class NodeControl(object):
         self.res_q = res_q
         self.conn_q = conn_q
         self.save_q = save_q
+        #超时时间
+        self.url_wait = 0
+        self.get_wait = 0
+        self.save_wait = 0
 
     def get_url_q(self):
         return self.url_q
@@ -39,28 +43,37 @@ class NodeControl(object):
     def url_control_pro(self, start_url):
         print("URL管理程序启动......")
         urlcontrol = URLcontrol()
-        urlcontrol.add_url(start_url)
+        if not urlcontrol.have_new:
+            urlcontrol.add_url(start_url)
         while True:
-            while urlcontrol.have_new:
-                new_url = urlcontrol.get_new_url()
-                self.url_q.put(new_url)
-                if urlcontrol.this_url_counts > st.NEED_URL_COUNTS:
-                    print('已经爬取了%s个URL......'% st.NEED_URL_COUNTS)
-                    urlcontrol.save_url()
-                    self.url_q.put('end')
-                    print("URL管理程序结束......")
-                    return
+            #活跃模式(输出URL)
+            if not urlcontrol.diode:
+                while urlcontrol.have_new:
+                    new_url = urlcontrol.get_new_url()
+                    self.url_q.put(new_url)
+                    if urlcontrol.this_url_counts > st.NEED_URL_COUNTS:
+                        print('已经爬取了%s个URL......'% st.NEED_URL_COUNTS)
+                        urlcontrol.diode = True
+                        self.url_q.put('end')
+                        print("URL管理程序进入休眠模式......")
+
 
             try:
                 if not self.conn_q.empty():
-
                     new_urls = self.conn_q.get()
                     urlcontrol.add_all_urls(new_urls)
-
-            except:
-                print('等待数据提取URL......')
-                time.sleep(0.5)
-
+                    self.url_wait = 0
+                else:
+                    print('等待数据提取URL......')
+                    time.sleep(1)
+                    self.url_wait += 1
+                    if self.url_wait > st.URL_WAIT_LIMIT:
+                        print('等待时间超过8分钟.....')
+                        urlcontrol.save_url()
+                        print('退出URL管理程序......')
+                        return
+            except Exception as e:
+                print(e)
     #数据提取进程
     def get_comment_pro(self):
         print("数据提取程序启动......")
@@ -82,10 +95,19 @@ class NodeControl(object):
                         self.conn_q.put(new_url)
                     if data:
                         self.save_q.put(data)
+                    self.get_wait = 0
+                else:
+                    print('等待爬虫传输......')
+                    self.get_wait += 1
+                    time.sleep(1)
+                    if self.get_wait > st.GET_WAIT_LIMIT:
+                        print('等待时间超过5分钟.....')
+                        print('退出数据提取程序......')
+                        return
 
-            except:
-                print('等待爬虫传输......')
-                time.sleep(0.5)
+            except Exception as e:
+                print(e)
+
 
     #数据存储过程
     def save_pro(self):
@@ -93,33 +115,28 @@ class NodeControl(object):
         data_control = DataSave()
         while True:
             try:
-                data = self.save_q.get()
-                if data == 'end':
-                    print('存储进程结束......')
-                    return
-                data_control.write_data(data)
+                if not self.save_q.empty():
+                    data = self.save_q.get()
+                    self.save_wait = 0
+                    if data == 'end':
+                        data_control.save()
+                        print('存储进程结束......')
+                        return
+                    data_control.write_data(data)
+                else:
+                    print('等待数据传输......')
+                    time.sleep(1)
+                    self.save_wait += 1
+                    if self.get_wait > st.SAVE_WAIT_LIMIT:
+                        print('等待时间超过8分钟.....')
+                        print('退出数据存储程序......')
+                        return
 
-            except:
-                print('等待数据传输......')
-                time.sleep(0.5)
+            except Exception as e:
+                print(e)
 
 
-# if __name__ == '__main__':
-#     url_q = Queue()
-#     res_q = Queue()
-#     conn_q = Queue()
-#     save_q = Queue()
-#     node = NodeControl(url_q, res_q, conn_q, save_q)
-#     manager = node.start_manager()
-#     #创建三个进程
-#     url_pro = Process(target = node.url_control_pro, args = START_URL)
-#     get_com_pro = Process(target = node.get_comment_pro)
-#     save_pro = Process(target = node.save_pro)
-#
-#     url_pro.start()
-#     get_com_pro.start()
-#     save_pro.start()
-#     manager.get_server().serve_forever()
+
 
 
 

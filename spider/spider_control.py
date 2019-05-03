@@ -32,6 +32,7 @@ class Spider_Control(object):
                     self.result_q.put('end')
                     return None
                 try:
+                    print('[%s]开始下载......' % url)
                     html_text = self.download.download(url)
                     if html_text:
                         print('[%s] 页面下载成功......' % url)
