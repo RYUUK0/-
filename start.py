@@ -1,6 +1,5 @@
 from simdispider.controler.nodecontrol import NodeControl
 from queue import Queue
-from multiprocessing import Process
 from threading import Thread
 from simdispider import settings
 

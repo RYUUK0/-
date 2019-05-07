@@ -1,6 +1,8 @@
-from simdispider.controler.datasave import DataSave
-from simdispider.controler.urlcontrol import URLcontrol
+from simdispider.controler.datasave import data_controler
+from simdispider.controler.urlcontrol import url_controler
 from multiprocessing.managers import BaseManager
+from simdispider.controler.timecontrol import time_controler
+from simdispider.controler.log import logger
 import time
 from simdispider import settings as st
 
@@ -18,10 +20,6 @@ class NodeControl(object):
         self.res_q = res_q
         self.conn_q = conn_q
         self.save_q = save_q
-        #超时时间
-        self.url_wait = 0
-        self.get_wait = 0
-        self.save_wait = 0
 
     def get_url_q(self):
         return self.url_q
@@ -41,99 +39,96 @@ class NodeControl(object):
 
     #URL管理进程
     def url_control_pro(self, start_url):
-        print("URL管理程序启动......")
-        urlcontrol = URLcontrol()
-        if not urlcontrol.have_new:
-            urlcontrol.add_url(start_url)
+        logger.write_log(level = 'info', data = "URL管理程序启动......")
+        if not url_controler.have_new:
+            url_controler.add_url(start_url)
         while True:
             #活跃模式(输出URL)
-            if not urlcontrol.diode:
-                while urlcontrol.have_new:
-                    new_url = urlcontrol.get_new_url()
+            if not url_controler.diode:
+                while url_controler.have_new:
+                    print('yyyyy')
+                    new_url = url_controler.get_new_url()
                     self.url_q.put(new_url)
-                    if urlcontrol.this_url_counts > st.NEED_URL_COUNTS:
-                        print('已经爬取了%s个URL......'% st.NEED_URL_COUNTS)
-                        urlcontrol.diode = True
+                    if url_controler.this_url_counts > st.NEED_URL_COUNTS:
+                        logger.write_log(level = 'info', data = '已经爬取了%s个URL......'% st.NEED_URL_COUNTS)
+                        url_controler.diode = True
                         self.url_q.put('end')
-                        print("URL管理程序进入休眠模式......")
+                        logger.write_log(level = 'info', data = "URL管理程序进入休眠模式......")
 
 
             try:
                 if not self.conn_q.empty():
                     new_urls = self.conn_q.get()
-                    urlcontrol.add_all_urls(new_urls)
-                    self.url_wait = 0
+                    url_controler.add_all_urls(new_urls)
+                    time_controler.reset_time(st.URL_NAME)
                 else:
-                    print('等待数据提取URL......')
+                    logger.write_log(level = 'info', data = '等待数据提取URL......')
                     time.sleep(1)
-                    self.url_wait += 1
-                    if self.url_wait > st.URL_WAIT_LIMIT:
-                        print('等待时间超过8分钟.....')
-                        urlcontrol.save_url()
-                        print('退出URL管理程序......')
-                        return
+                    if time_controler.judge_timeout(st.URL_NAME):
+                            url_controler.save_url()
+                            logger.write_log(level = 'info', data = '退出URL管理程序......')
+                            logger.save_all()
+                            return
             except Exception as e:
-                print(e)
+                data = '[' + st.URL_NAME + ']' + e
+                logger.write_log(level='error', data=data)
     #数据提取进程
     def get_comment_pro(self):
-        print("数据提取程序启动......")
+        logger.write_log(level='info', data='数据提取程序启动......')
         while True:
             try:
                 if not self.res_q.empty():
                     comment = self.res_q.get()
-                    print('得到数据......')
-
+                    logger.write_log(level = 'info', data = '得到数据......')
                     if comment == 'end':
                         self.save_q.put('end')
-                        print('通知存储进程结束......')
+                        logger.write_log(level = 'info', data = '通知存储进程结束......')
                         return
                     new_url = comment.get('url')
                     data = comment.get('data')
-                    # print(new_url)
-                    # print(data)
                     if new_url:
                         self.conn_q.put(new_url)
                     if data:
                         self.save_q.put(data)
-                    self.get_wait = 0
+                    time_controler.reset_time(st.GET_NAME)
                 else:
-                    print('等待爬虫传输......')
-                    self.get_wait += 1
+                    logger.write_log(level='info', data='等待爬虫传输......')
                     time.sleep(1)
-                    if self.get_wait > st.GET_WAIT_LIMIT:
-                        print('等待时间超过5分钟.....')
-                        print('退出数据提取程序......')
+                    if time_controler.judge_timeout(st.GET_NAME):
+                        logger.write_log(level='info', data='退出数据提取程序......')
+                        logger.save_all()
                         return
 
             except Exception as e:
-                print(e)
+                data = '[' + st.GET_NAME + ']' + e
+                logger.write_log(level = 'error', data = data)
 
 
     #数据存储过程
     def save_pro(self):
-        print("数据存储程序启动......")
-        data_control = DataSave()
+        logger.write_log(level='info', data='数据存储程序启动......')
         while True:
             try:
                 if not self.save_q.empty():
                     data = self.save_q.get()
-                    self.save_wait = 0
+                    time_controler.reset_time(st.SAVE_NAME)
                     if data == 'end':
-                        data_control.save()
-                        print('存储进程结束......')
+                        data_controler.save()
+                        logger.write_log(level='info', data='存储进程结束......')
                         return
-                    data_control.write_data(data)
+                    data_controler.write_data(data)
                 else:
-                    print('等待数据传输......')
+                    logger.write_log(level='info', data='等待数据传输......')
                     time.sleep(1)
-                    self.save_wait += 1
-                    if self.get_wait > st.SAVE_WAIT_LIMIT:
-                        print('等待时间超过8分钟.....')
-                        print('退出数据存储程序......')
+                    if time_controler.judge_timeout(st.SAVE_NAME):
+                        logger.write_log(level='info', data='退出数据存储程序......')
+                        logger.save_all()
                         return
 
             except Exception as e:
-                print(e)
+                data = '[' + st.SAVE_NAME + ']' + e
+                logger.write_log(level = 'error', data = data)
+
 
 
 

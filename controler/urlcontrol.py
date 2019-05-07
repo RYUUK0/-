@@ -1,6 +1,7 @@
 #
 
 from simdispider import settings as st
+from simdispider.controler.log import logger
 import hashlib
 import json
 
@@ -14,35 +15,35 @@ class URLcontrol(object):
 
     #读取和保存URL文件
     def get_file_comment(self, path):
-        print('正在加载文件......')
+        logger.write_log(level = 'info', data = "正在加载文件......")
         try:
             with open(path, 'r') as x:
                 comment = json.load(x)
-
-                print('加载成功......')
+                logger.write_log(level = 'info', data = "加载文件成功......")
                 if isinstance(comment, list):
                     comment = set(comment)
                 return comment
         except Exception as e:
-            print(e)
-            print('加载失败......')
+            data = '[' + st.URL_NAME + ']' + str(e)
+            logger.write_log(level = 'error', data = data)
         return set()
 
     def save_file_comment(self, path, data):
-        print('[%s]保存中' % path)
+        mes = '[%s]保存中......' % path
+        logger.write_log(level = 'info', data = mes)
         if isinstance(data, set):
             data = list(data)
         with open(path, 'w') as x:
             json.dump(data, x)
-            print('文件保存完成......')
+            logger.write_log(level = 'info', data = "文件保存完成......")
 
     def save_url(self):
         try:
             self.save_file_comment(st.NEW_URL_PATH, self.new_urls)
             self.save_file_comment(st.OLD_URL_PATH, self.old_urls)
         except Exception as f:
-            print(f)
-            print('文件保存失败......')
+            data = '[' + st.URL_NAME + ']' + f
+            logger.write_log(level = 'error', data = data)
 
     #添加单个URL和URL集合
     def add_url(self, url):
@@ -51,7 +52,8 @@ class URLcontrol(object):
             md5.update(url.encode())
             hash_url = md5.hexdigest()
             if url not in self.new_urls and hash_url not in self.old_urls:
-                print("[%s]链接添加......"%url)
+                mes = "[%s]链接添加......" % url
+                logger.write_log(level = 'run', data = mes)
                 self.this_url_counts += 1
                 self.new_urls.add(url)
 
@@ -64,12 +66,12 @@ class URLcontrol(object):
                     self.add_url(url)
 
     def get_new_url(self):
-        if not self.diode:
-            new_url = self.new_urls.pop()
-            md5 = hashlib.md5()
-            md5.update(new_url.encode())
-            self.old_urls.add(md5.hexdigest())
-            return new_url
+
+        new_url = self.new_urls.pop()
+        md5 = hashlib.md5()
+        md5.update(new_url.encode())
+        self.old_urls.add(md5.hexdigest())
+        return new_url
 
     @property
     def new_urls_size(self):
@@ -83,4 +85,6 @@ class URLcontrol(object):
     def have_new(self):
         if self.new_urls_size:
             return True
+        return False
 
+url_controler = URLcontrol()

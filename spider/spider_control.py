@@ -2,7 +2,7 @@ from simdispider.spider.htmldownload import HtmlDownload, HtmlResolv
 from multiprocessing.managers import BaseManager
 import time
 
-print(HtmlDownload, HtmlResolv)
+#print(HtmlDownload, HtmlResolv)
 
 
 class Spider_Control(object):

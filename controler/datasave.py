@@ -2,6 +2,7 @@ import csv
 import time
 import os
 from simdispider import settings
+from simdispider.controler.log import logger
 
 
 class DataSave(object):
@@ -16,12 +17,12 @@ class DataSave(object):
                 for book_dict in self.data:
                     info_list = [v for k, v in book_dict.items()]
                     writer.writerow(info_list)
-                print('文件存储完成......')
+                logger.write_log(level = 'info', data = "文件存储完成......")
                 self.data = []
 
             except Exception as e:
-                print(e)
-                print('文件存储失败......')
+                data = '[' + settings.SAVE_NAME + ']' + e
+                logger.write_log(level = 'error', data = data)
 
     def write_head(self):
         try:
@@ -29,11 +30,10 @@ class DataSave(object):
                 writer = csv.writer(f)
                 title = [k for k, v in self.data[0].items()]
                 writer.writerow(title)
-
-            print('写入表头成功......')
-        except:
-
-            print('写入表头失败......')
+            logger.write_log(level = 'info', data = "写入表头成功......")
+        except Exception as e :
+            data = '[' + settings.SAVE_NAME + ']' + e
+            logger.write_log(level = 'error', data = data)
 
     def write_data(self, data):
         if data:
@@ -43,3 +43,4 @@ class DataSave(object):
                     self.write_head()
                 self.save()
 
+data_controler = DataSave()

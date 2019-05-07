@@ -19,7 +19,16 @@ Download_Data_Path = MAIN_PATH + '\\Download_Data\\'
 NEED_URL_COUNTS = 200
 
 #超时时间限制
-GET_WAIT_LIMIT = 300
-URL_WAIT_LIMIT = 480
-SAVE_WAIT_LIMIT = 480
+GET_WAIT_LIMIT = 120
+URL_WAIT_LIMIT = 100
+SAVE_WAIT_LIMIT = 100
+
+#管理器名字
+URL_NAME = 'urlcontrol'
+GET_NAME = 'getcontrol'
+SAVE_NAME = 'savecontrol'
+
+#日志存储位置
+LOG_PATH = MAIN_PATH + '\\log\\'
+
 

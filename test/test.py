@@ -60,5 +60,28 @@ from queue import Queue
 #
 #
 #
-q = Queue()
-s = q.get()
+# xx = {'one': 11, 'two': 22, 'three': 0}
+# s = 'three'
+#
+# t = xx.get(s)
+# if t:
+#     print(t)
+# print(t)
+# print('不存在')
+
+x = []
+a = 'haha'
+b = 'siwerk'
+c = 'siewkew'
+x.append(a)
+x.append(b)
+x.append(c)
+print(x)
+with open('test.txt', 'a', encoding = 'utf-8') as f:
+    for i in x:
+        i = '[' + time.strftime('%m_%d_%H_%M_%S') + ']' + i + '\n'
+        f.write(i)
+        time.sleep(1)
+
+print('end')
+
