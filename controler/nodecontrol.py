@@ -46,7 +46,6 @@ class NodeControl(object):
             #活跃模式(输出URL)
             if not url_controler.diode:
                 while url_controler.have_new:
-                    print('yyyyy')
                     new_url = url_controler.get_new_url()
                     self.url_q.put(new_url)
                     if url_controler.this_url_counts > st.NEED_URL_COUNTS:

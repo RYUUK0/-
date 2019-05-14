@@ -1,6 +1,6 @@
 import sys
 import os
-MAIN_PATH = os.path.dirname(os.path.abspath((__file__)))
+MAIN_PATH = os.path.dirname(os.path.abspath(__file__))
 
 #新旧URL存储位置
 NEW_URL_PATH = MAIN_PATH + '\\URL_Data\\new_url.txt'

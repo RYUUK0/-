@@ -26,7 +26,7 @@ class Log(object):
             elif level == 'error':
                 data = data + '\n'
                 self.error_data.append(data)
-                if len(self.error_data) > 10:
+                if len(self.error_data) > 5:
                     self.save(level)
 
         else:

@@ -16,6 +16,9 @@ class HtmlDownload(object):
                 if response.status_code == 200:
                     response.encoding = 'utf-8'
                     return response.text
+
+                else:
+                    return None
             except InvalidURL as e:
                 print(e)
                 print('[%s]页面跳过......'% url)

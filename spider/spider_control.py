@@ -38,13 +38,13 @@ class Spider_Control(object):
                         print('[%s] 页面下载成功......' % url)
                         res = self.resolv.resolv(url, html_text)
                         if res:
-                            print('%s 页面解析成功......' % url)
+                            print('[%s] 页面解析成功......' % url)
                             self.result_q.put(res)
                         else:
-                            print('%s 页面解析失败......' % url)
+                            print('[%s] 页面解析失败......' % url)
 
                     else:
-                        print('%s 页面下载失败......' % url)
+                        print('[%s] 页面下载失败......' % url)
                 except:
                     print('此URL连接失败......')
 
